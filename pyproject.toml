@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "nagata"
+version = "0.1.0"
+description = "python file management using a common, intuitive syntax"
+authors = ["WithPrecedent <coreyrayburnyung@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+amos = "^0.1.5"
+miller = "^0.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
