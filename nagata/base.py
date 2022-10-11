@@ -21,7 +21,7 @@ Contents:
         various disk-related tasks.
     formats (obi.Dictionary): a dictionary of the out-of-the-box supported file 
         formats.
-    Clerk (object): interface for obi file management classes and methods.
+    FileManager (object): interface for obi file management classes and methods.
     combine_path:
     get_transfer_parameters:
     prepare_transfer:
@@ -43,7 +43,7 @@ import amos
 from . import formats
 
 
-""" Default Parameters for Clerk """
+""" Default Parameters for FileManager """
     
 default_parameters: MutableMapping[str, Any] = {
     'file_encoding': 'windows-1252',
@@ -90,7 +90,7 @@ formats: amos.Dictionary[str, formats.FileFormat] = amos.Dictionary(
 
    
 @dataclasses.dataclass
-class Clerk(object):
+class FileManager(object):
     """File and folder management for obi.
 
     Creates and stores dynamic and static file paths, properly formats files
@@ -99,7 +99,7 @@ class Clerk(object):
 
     Args:
         root_folder (Union[str, pathlib.Path]): the complete path from which the 
-            other paths and folders used by Clerk are ordinarily derived 
+            other paths and folders used by FileManager are ordinarily derived 
             (unless you decide to use full paths for all other options). 
             Defaults to None. If not passed, the parent folder of the current 
             working workery is used.
@@ -146,15 +146,14 @@ class Clerk(object):
         file_path is passed, folder and file_name are ignored.
 
         Args:
-            file_path (Union[str, Path]]): a complete file path.
-                Defaults to None.
-            folder (Union[str, Path]]): a complete folder path or the
-                name of a folder stored in 'clerk'. Defaults to None.
-            file_name (str): file name without extension. Defaults to
+            file_path (Union[str, Path]]): a complete file path. Defaults to 
                 None.
-            file_format (Union[str, FileFormat]]): object with
-                information about how the file should be loaded or the key to
-                such an object stored in 'clerk'. Defaults to None
+            folder (Union[str, Path]]): a complete folder path or the name of a 
+                folder. Defaults to None.
+            file_name (str): file name without extension. Defaults to None.
+            file_format (Union[str, FileFormat]]): object with information about 
+                how the file should be loaded or the key to such an object. 
+                Defaults to None.
             **kwargs: can be passed if additional options are desired specific
                 to the pandas or python method used internally.
 
@@ -187,15 +186,14 @@ class Clerk(object):
 
         Args:
             item (Any): object to be save to disk.
-            file_path (Union[str, Path]]): a complete file path.
-                Defaults to None.
-            folder (Union[str, Path]]): a complete folder path or the
-                name of a folder stored in 'clerk'. Defaults to None.
-            file_name (str): file name without extension. Defaults to
+            file_path (Union[str, Path]]): a complete file path. Defaults to 
                 None.
-            file_format (Union[str, FileFormat]]): object with
-                information about how the file should be loaded or the key to
-                such an object stored in 'clerk'. Defaults to None
+            folder (Union[str, Path]]): a complete folder path or the name of a 
+                folder. Defaults to None.
+            file_name (str): file name without extension. Defaults to None.
+            file_format (Union[str, FileFormat]]): object with information about 
+                how the file should be loaded or the key to such an object. 
+                Defaults to None.
             **kwargs: can be passed if additional options are desired specific
                 to the pandas or python method used internally.
 
@@ -278,7 +276,7 @@ def combine_path(
     folder: str,
     file_name: Optional[str] = None,
     extension: Optional[str] = None,
-    clerk: Optional[Clerk] = None) -> pathlib.Path:
+    manager: Optional[FileManager] = None) -> pathlib.Path:
     """Converts strings to pathlib Path object.
 
     If 'folder' matches an attribute, the value stored in that attribute
@@ -291,15 +289,15 @@ def combine_path(
         folder (str): folder for file location.
         name (str): the name of the file.
         extension (str): the extension of the file.
-        clerk (Optional[Clerk]): a Clerk instance that may have attributes with
+        manager (Optional[FileManager]): a FileManager instance that may have attributes with
             folder paths. Defaults to None.
 
     Returns:
         Path: formed from string arguments.
 
     """
-    if clerk is not None and hasattr(clerk, folder):
-        folder = getattr(clerk, folder)
+    if manager is not None and hasattr(manager, folder):
+        folder = getattr(manager, folder)
     if file_name and extension:
         return pathlib.Path(folder).joinpath(f'{file_name}.{extension}')
     else:
@@ -336,15 +334,14 @@ def prepare_transfer(
     """Prepares file path related arguments for loading or saving a file.
 
     Args:
-        file_path (Union[str, Path]): a complete file path.
-        folder (Union[str, Path]): a complete folder path or the name of a
-            folder stored in 'clerk'.
-        file_name (str): file name without extension.
-        file_format (Union[str, FileFormat]): object with information about
-            how the file should be loaded or the key to such an object
-            stored in 'clerk'.
-        **kwargs: can be passed if additional options are desired specific
-            to the pandas or python method used internally.
+        file_path (Union[str, Path]]): a complete file path. Defaults to 
+            None.
+        folder (Union[str, Path]]): a complete folder path or the name of a 
+            folder. Defaults to None.
+        file_name (str): file name without extension. Defaults to None.
+        file_format (Union[str, FileFormat]]): object with information about 
+            how the file should be loaded or the key to such an object. 
+            Defaults to None.
 
     Returns:
         tuple: of a completed Path instance and FileFormat instance.

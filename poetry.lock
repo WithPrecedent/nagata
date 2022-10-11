@@ -1,0 +1,48 @@
+[[package]]
+name = "amos"
+version = "0.1.5"
+description = "Your Python project companion"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+
+[package.dependencies]
+more-itertools = ">=8.10.0,<9.0.0"
+
+[[package]]
+name = "miller"
+version = "0.1.2"
+description = "introspection tools using consistent, accessible syntax"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+
+[package.dependencies]
+amos = ">=0.1.5,<0.2.0"
+
+[[package]]
+name = "more-itertools"
+version = "8.14.0"
+description = "More routines for operating on iterables, beyond itertools"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.9"
+content-hash = "e67ceb5a4c7ca8d157fc2d7c5395e444e80a1578e4a85acee073cc1d463613de"
+
+[metadata.files]
+amos = [
+    {file = "amos-0.1.5-py3-none-any.whl", hash = "sha256:4ed8c8da2cc6e224808294bcffb4fc17824538c6a9b09575ee201ae23c324f40"},
+    {file = "amos-0.1.5.tar.gz", hash = "sha256:71fb43736c4989f304d9ca7a90ec4c103b571faeb85f2973e0d5af114f449c2c"},
+]
+miller = [
+    {file = "miller-0.1.2-py3-none-any.whl", hash = "sha256:487b5756e3048d2834e768dda7987ac4a343e1647092d5fc4ef37c68069d9d27"},
+    {file = "miller-0.1.2.tar.gz", hash = "sha256:7753515c355a8e6f2d9479cd91b00909fb63d73806db43819941b4abd193996b"},
+]
+more-itertools = [
+    {file = "more-itertools-8.14.0.tar.gz", hash = "sha256:c09443cd3d5438b8dafccd867a6bc1cb0894389e90cb53d227456b0b0bccb750"},
+    {file = "more_itertools-8.14.0-py3-none-any.whl", hash = "sha256:1bc4f91ee5b1b31ac7ceacc17c09befe6a40a503907baf9c839c229b5095cfd2"},
+]

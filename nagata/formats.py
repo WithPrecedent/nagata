@@ -17,7 +17,7 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    FileFormat (amos.InstanceFactory): contains data needed for a Clerk-
+    FileFormat (amos.InstanceFactory): contains data needed for a FileManager-
         compatible file format.
     load_text:
     save_text:
