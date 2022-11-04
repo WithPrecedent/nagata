@@ -30,8 +30,8 @@ from typing import Any, ClassVar
 import nagata
 
    
-    
 def test_all() -> None:
+    
     manager = nagata.FileManager(
         root_folder = pathlib.Path('.').joinpath('tests'),
         input_folder = 'dummy_folder',
@@ -52,6 +52,8 @@ def test_all() -> None:
         file_name = 'poem',
         folder = 'output',
         file_format = 'text')
+    test_csv = manager.load(file_name = 'csv_test_file.csv')
+    manager.save(test_csv, file_name = 'test_csv_out.csv')
     return
 
 if __name__ == '__main__':

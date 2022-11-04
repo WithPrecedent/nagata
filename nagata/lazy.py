@@ -100,29 +100,30 @@ def from_import_path(path: str, package: Optional[str] = None) -> Any:
         Any: [description]
         
     """
+    # if package and isinstance(path, str):
+    #     path = '.'.join([path, package])
+    print('test sys modules', 'pandas' in sys.modules)
+    print('test path package', path, package)
     try:
         return sys.modules[path]
+    
     except KeyError:
-        if package is None:
-            kwargs = {}
-        else:
-            kwargs = {'package': package}
         techniques = [
             absolute_import,
-            absolute_supackage_import,
+            absolute_subpackage_import,
             relative_import,
             relative_subpackage_import]
         for technique in techniques:
             try:
-                return technique(path, **kwargs)
+                return technique(path, package)
             except ModuleNotFoundError:
                 item = path.split('.')[-1]
                 module_name = path[:-len(item) - 1]
-                module = technique(module_name, **kwargs)
+                module = technique(module_name, package)
                 return getattr(module, item)  
         raise ModuleNotFoundError(f'{path} could not be imported') 
              
-def absolute_import(path: str) -> Any:
+def absolute_import(path: str, package: str) -> Any:
     """[summary]
 
     Args:
@@ -137,7 +138,7 @@ def absolute_import(path: str) -> Any:
         return relative_subpackage_import(path = path)
     return importlib.import_module(path)
  
-def absolute_supackage_import(path: str, package: str) -> Any:
+def absolute_subpackage_import(path: str, package: str) -> Any:
     """[summary]
 
     Args:

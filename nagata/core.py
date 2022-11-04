@@ -34,6 +34,8 @@ import abc
 from collections.abc import Hashable, Mapping, MutableMapping, Sequence
 import contextlib
 import dataclasses
+import importlib
+import importlib.util
 import pathlib
 import types
 from typing import Any, ClassVar, Optional, Type
@@ -41,12 +43,11 @@ from typing import Any, ClassVar, Optional, Type
 import amos
 import miller
 
-from . import transfer
 from . import lazy
 
 
 @dataclasses.dataclass
-class FileFormat(object):
+class FileFormat(abc.ABC):
     """File format information, loader, and saver.
 
     Args:
@@ -79,85 +80,109 @@ class FileFormat(object):
             dict. 
         
     """
-    name: str
-    extensions: str | Sequence[str]
-    saver: str | types.FunctionType
-    loader: Optional[str | types.FunctionType] = None
-    module: Optional[str] = None
-    parameters: Optional[Mapping[str, str]] = dataclasses.field(
-        default_factory = dict)
+    extensions: ClassVar[str | Sequence[str]] = None
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    # name: str
+    # extensions: str | Sequence[str] = None
+    # # saver: str | types.FunctionType
+    # # loader: Optional[str | types.FunctionType] = None
+    # # module: Optional[str] = None
+    # parameters: Optional[Mapping[str, str]] = dataclasses.field(
+    #     default_factory = dict)
     
     """ Initialization Methods """
-            
-    def __post_init__(self) -> None:
-        """Automatically registers subclass."""
+    
+    @classmethod
+    def __init_subclass__(cls, *args: Any, **kwargs: Any):
+        """Automatically registers subclass in ProjectKeystones."""
         with contextlib.suppress(AttributeError):
-            super().__post_init__(*args, **kwargs) # type: ignore
-        key = amos.namify(item = self)
-        FileFramework.formats[key] = self
+            super().__init_subclass__(*args, **kwargs) # type: ignore
+        if abc.ABC not in cls.__bases__:
+            key = amos.namify(item = cls)
+            if key.startswith('file_format_'):
+                key = key[12:]
+            print('test key', key)
+            FileFramework.formats[key] = cls(*args, **kwargs)
+            print('test formats as we go', FileFramework.formats)
+                    
+    # def __post_init__(self) -> None:
+    #     """Automatically registers subclass."""
+    #     with contextlib.suppress(AttributeError):
+    #         super().__post_init__(*args, **kwargs) # type: ignore
+    #     key = amos.namify(item = self)
+    #     FileFramework.formats[key] = self
 
-    """ Public Methods """
+    # """ Public Methods """
     
-    def load(self, path: pathlib.Path | str, **kwargs) -> Any:
-        """Loads a file of the included file format.
+    # def load(self, path: pathlib.Path | str, **kwargs) -> Any:
+    #     """Loads a file of the included file format.
 
-        Args:
-            path (pathlib.Path | str): path of file to load from disk.
+    #     Args:
+    #         path (pathlib.Path | str): path of file to load from disk.
 
-        Returns:
-            Any: content of loaded file.
+    #     Returns:
+    #         Any: content of loaded file.
             
-        """             
-        method = self._validate_io_method(attribute = 'loader')
-        return method(path, **kwargs)
+    #     """         
+    #     method = self._validate_io_method(attribute = 'loader')
+    #     return method(path, **kwargs)
     
-    def save(self, item: Any, path: pathlib.Path | str, **kwargs) -> None:
-        """Saves a file of the included file format.
+    # def save(self, item: Any, path: pathlib.Path | str, **kwargs) -> None:
+    #     """Saves a file of the included file format.
 
-        Args:
-            item (Any): item to save to disk.
-            path (pathlib.Path | str): path where the file should be saved.
+    #     Args:
+    #         item (Any): item to save to disk.
+    #         path (pathlib.Path | str): path where the file should be saved.
             
-        """        
-        method = self._validate_io_method(attribute = 'saver')
-        method(item, path, **kwargs)
-        return self
+    #     """        
+    #     method = self._validate_io_method(attribute = 'saver')
+    #     method(item, path, **kwargs)
+    #     return self
     
-    """ Private Methods """
+    # """ Private Methods """
     
-    def _validate_io_method(self, attribute: str) -> types.FunctionType:
-        """[summary]
+    # def _validate_io_method(self, attribute: str) -> types.FunctionType:
+    #     """[summary]
 
-        Args:
-            attribute (str): [description]
+    #     Args:
+    #         attribute (str): [description]
 
-        Raises:
-            AttributeError: [description]
-            ValueError: [description]
+    #     Raises:
+    #         AttributeError: [description]
+    #         ValueError: [description]
 
-        Returns:
-            types.FunctionType: [description]
+    #     Returns:
+    #         types.FunctionType: [description]
             
-        """        
-        value = getattr(self, attribute)
-        if isinstance(value, str):
-            if self.module is None:
-                try:
-                    method = getattr(self, value)
-                except AttributeError:
-                    try:
-                        method = getattr(transfer, value)
-                    except AttributeError:
-                        raise AttributeError(f'{value} could not be found')
-            else:
-                method = lazy.from_import_path(
-                    path = value, 
-                    package = self.module)
-            setattr(self, attribute, method)
-        if not isinstance(value, types.FunctionType):
-            raise ValueError(
-                f'{attribute} must be a str, function, or method')
-        return method
+    #     """        
+    #     method = getattr(self, attribute)
+    #     if isinstance(method, str):
+    #         if self.module is None:
+    #             try:
+    #                 method = getattr(self, method)
+    #             except AttributeError:
+    #                 try:
+    #                     method = getattr(transfer, method)
+    #                 except AttributeError:
+    #                     raise AttributeError(f'{method} could not be found')
+    #     elif isinstance(method, Sequence):
+    #         transfer_info = getattr(self, attribute)
+    #         print('test transfer info',transfer_info[0], transfer_info[1] )
+    #         package = importlib.__import__(transfer_info[0])
+    #         importlib.util.spec.loader.exec_module(package)
+    #         method = getattr(package, transfer_info[1])
+    #             # package = importlib.__import__(self.module)
+    #             # name = getattr(self, attribute)
+    #             # method = getattr(package, name)
+    #             # method = lazy.from_import_path(
+    #             #     path = value, 
+    #             #     package = self.module)
+    #     setattr(self, attribute, method)
+    #     if not isinstance(method, types.FunctionType):
+    #         raise ValueError(
+    #             f'{attribute} must be a str, function, or method')
+    #     return method
         
         
 @dataclasses.dataclass
@@ -174,8 +199,8 @@ class FileFramework(abc.ABC):
     """
     settings: ClassVar[dict[Hashable, Any]] = {
         'file_encoding': 'windows-1252',
-        'index_column': True,
-        'include_header': True,
+        'index_column': False,
+        'header': 'infer',
         'conserve_memory': False,
         'test_size': 1000,
         'threads': -1,
@@ -241,6 +266,7 @@ class FileManager(object):
                 key to the file_format in the 'formats' attribute.
         
         """
+        print('test formats', self.framework.formats)
         extensions = {}
         for key, instance in self.framework.formats.items():
             if isinstance(instance.extensions, str):
@@ -292,7 +318,8 @@ class FileManager(object):
         parameters = self._get_transfer_parameters(
             file_format = file_format, 
             **kwargs)
-        return file_format.loader(path = file_path, **parameters)
+        print('test path',file_path)
+        return file_format.load(path = file_path, **parameters)
 
     def save(
         self,
@@ -330,7 +357,7 @@ class FileManager(object):
         parameters = self._get_transfer_parameters(
             file_format = file_format, 
             **kwargs)
-        file_format.saver(item = item, path = file_path, **parameters)
+        file_format.save(item = item, path = file_path, **parameters)
         return
 
     def validate(self, path: pathlib.Path | str) -> pathlib.Path:
