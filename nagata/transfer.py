@@ -30,6 +30,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 import pathlib
 import sys
+import types
 from typing import Any, ClassVar, Optional, Type
 
 from . import lazy

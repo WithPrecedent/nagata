@@ -66,7 +66,7 @@ core.FileFormat(
 core.FileFormat(
     name = 'hdf',
     module = 'pandas',
-    extensions = 'hdf',
+    extensions = ('hdf', 'hdf5'),
     loader = 'read_hdf',
     saver = 'to_hdf',
     parameters = {

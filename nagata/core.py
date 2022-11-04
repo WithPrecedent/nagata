@@ -17,10 +17,13 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    FileFormat
-    FileFramework
-    FileManager (object): interface for nagata file management classes and 
-        methods.
+    FileFormat (object): base class for defining rules and methods for different
+        file formats.
+    FileFramework (object): Stores default settings, all file formats, and any
+        other shared information used by FileManager.
+    FileManager (object): interface for nagata file management. It provides a
+        one-stop place for loading and saving all files of supported file types 
+        in an organizational structure specified by the user.
     
 ToDo:
 
@@ -28,10 +31,9 @@ ToDo:
 """
 from __future__ import annotations
 import abc
-from collections.abc import Hashable, MutableMapping, MutableSequence, Sequence
+from collections.abc import Hashable, Mapping, MutableMapping, Sequence
 import contextlib
 import dataclasses
-import inspect
 import pathlib
 import types
 from typing import Any, ClassVar, Optional, Type
@@ -48,34 +50,41 @@ class FileFormat(object):
     """File format information, loader, and saver.
 
     Args:
-        name (Optional[str]): the format name which should match the key when a 
-            FileFormat instance is stored.
+        name (str): the format name which should match the key when a FileFormat 
+            instance is stored. 'name' is required so that the automatic 
+            registration of all FileFormat instances works properly.
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        loader (str | types.FunctionType): if a str, it is the name of the 
+            loading method in 'module' to use, name of attribute of the loading
+            method on the FileFormat instance, or the name of a method in the
+            'transfer' module of nagata. Otherwise, it should be a function for 
+            loading.
+        saver (str | types.FunctionType): if a str, it is the name of the 
+            saving method in 'module' to use, name of attribute of the saving
+            method on the FileFormat instance, or the name of a method in the
+            'transfer' module of nagata. Otherwise, it should be a function for 
+            saving.
         module (Optional[str]): name of module where the relevant loader and 
-            saver are located, which can either be a nagata or non-nagata 
-            module. Defaults to None.
-        extensions (Optional[Union[str, MutableSequence[str]]]): str file 
-            extension(s) to use. If more than one is listed, the first one is 
-            used for saving new files and all will be used for loading. Defaults 
-            to None.
-        loader (Optional[Union[str, types.FunctionType]]): if a str, it is
-            the name of import method in 'module' to use. Otherwise, it should
-            be a function for loading. Defaults to None.
-        saver (Optional[Union[str, types.FunctionType]]): if a str, it is
-            the name of import method in 'module' to use. Otherwise, it should
-            be a function for saved. Defaults to None.
-        parameters (Mapping[str, str]]): shared parameters to use from 
-            configuration settings where the key is the parameter name that the 
-            load or save method should use and the value is the key for the 
-            argument in the shared parameters. Defaults to an empty dict. 
-        instances (ClassVar[amos.Catalog]): project catalog of instances.
+            saver are located. If 'module' is None, nagata will first look to
+            see if 'loader' or 'saver' is attached to the FileFormat instance
+            and then check for a function in the 'transfer' module. Defaults to
+            None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
         
     """
-    name: Optional[str] = None
-    module: Optional[str] = None
-    extensions: Optional[str | MutableSequence[str]] = None
+    name: str
+    extensions: str | Sequence[str]
+    saver: str | types.FunctionType
     loader: Optional[str | types.FunctionType] = None
-    saver: Optional[str | types.FunctionType] = None
-    parameters: MutableMapping[str, str] = dataclasses.field(
+    module: Optional[str] = None
+    parameters: Optional[Mapping[str, str]] = dataclasses.field(
         default_factory = dict)
     
     """ Initialization Methods """
@@ -90,27 +99,24 @@ class FileFormat(object):
     """ Public Methods """
     
     def load(self, path: pathlib.Path | str, **kwargs) -> Any:
-        """[summary]
+        """Loads a file of the included file format.
 
         Args:
-            path (pathlib.Path | str): [description]
+            path (pathlib.Path | str): path of file to load from disk.
 
         Returns:
-            Any: [description]
+            Any: content of loaded file.
             
         """             
         method = self._validate_io_method(attribute = 'loader')
         return method(path, **kwargs)
     
     def save(self, item: Any, path: pathlib.Path | str, **kwargs) -> None:
-        """[summary]
+        """Saves a file of the included file format.
 
         Args:
-            item (Any): [description]
-            path (pathlib.Path | str): [description]
-
-        Returns:
-            [type]: [description]
+            item (Any): item to save to disk.
+            path (pathlib.Path | str): path where the file should be saved.
             
         """        
         method = self._validate_io_method(attribute = 'saver')
@@ -140,10 +146,9 @@ class FileFormat(object):
                     method = getattr(self, value)
                 except AttributeError:
                     try:
-                        method = locals()[value]
+                        method = getattr(transfer, value)
                     except AttributeError:
-                        raise AttributeError(
-                            f'{value} {attribute} could not be found')
+                        raise AttributeError(f'{value} could not be found')
             else:
                 method = lazy.from_import_path(
                     path = value, 
@@ -176,103 +181,8 @@ class FileFramework(abc.ABC):
         'threads': -1,
         'visual_tightness': 'tight', 
         'visual_format': 'png'}
-    formats: amos.Dictionary[str, FileFormat] = amos.Dictionary(
-        contents = {
-            'csv': formats.FileFormat(
-                name = 'csv',
-                module = 'pandas',
-                extensions = 'csv',
-                loader = 'read_csv',
-                saver = 'to_csv',
-                parameters = {
-                    'encoding': 'file_encoding',
-                    'index_col': 'index_column',
-                    'header': 'include_header',
-                    'low_memory': 'conserve_memory',
-                    'nrows': 'test_size'}),
-            'excel': formats.FileFormat(
-                name = 'excel',
-                module = 'pandas',
-                extensions = ('xlsx', 'xls'),
-                loader = 'read_excel',
-                saver = 'to_excel',
-                parameters = {
-                    'index_col': 'index_column',
-                    'header': 'include_header',
-                    'nrows': 'test_size'}),
-            'feather': formats.FileFormat(
-                name = 'feather',
-                module = 'pandas',
-                extensions = 'feather',
-                loader = 'read_feather',
-                saver = 'to_feather',
-                parameters = {'nthreads': 'threads'}),
-            'hdf': formats.FileFormat(
-                name = 'hdf',
-                module = 'pandas',
-                extensions = 'hdf',
-                loader = 'read_hdf',
-                saver = 'to_hdf',
-                parameters = {
-                    'columns': 'included_columns',
-                    'chunksize': 'test_size'}),
-            'json': formats.FileFormat(
-                name = 'json',
-                module = 'json',
-                extensions = 'json',
-                loader = 'read_json',
-                saver = 'to_json'),
-            'pickle': formats.FileFormat(
-                name = 'pickle',
-                module = 'pickle',
-                extensions = ['pickle', 'pkl'],
-                loader = formats.load_pickle,
-                saver = formats.save_pickle),
-            'png': formats.FileFormat(
-                name = 'png',
-                module = 'seaborn',
-                extensions = 'png',
-                saver = 'save_fig',
-                parameters = {
-                    'bbox_inches': 'visual_tightness', 
-                    'format': 'visual_format'}),
-            'stata': formats.FileFormat(
-                name = 'stata',
-                module = 'pandas',
-                extensions = 'dta',
-                loader = 'read_stata',
-                saver = 'to_stata',
-                parameters = {'chunksize': 'test_size'}),
-            'text': formats.FileFormat(
-                name = 'text',
-                module = None,
-                extensions = ['txt', 'text'],
-                loader = formats.load_text,
-                saver = formats.save_text)})
-    
-    """ Properties """
-    
-    @property
-    def extensions(self) -> dict[str, str]: 
-        """Returns dict of file extensions.
-        
-        Raises:
-            TypeError: when a non-string or non-sequence is discovered in a
-                stored FileFormat's 'extensions' attribute.
-        Returns:
-            dict[str, str]: keys are file extensions and values are the related
-                key to the file_format in the 'formats' attribute.
-        
-        """
-        extensions = {}
-        for key, instance in self.formats.items():
-            if isinstance(instance.extensions, str):
-                extensions[instance.extensions] = key
-            elif isinstance(instance.extensions, Sequence):
-                extensions.update(dict.fromkeys(instance.extensions, key))
-            else:
-                raise TypeError(
-                    f'{instance.extensions} are not valid extension types')
+    formats: amos.Dictionary[str, FileFormat] = amos.Dictionary()
+  
    
 @dataclasses.dataclass
 class FileManager(object):
@@ -316,7 +226,32 @@ class FileManager(object):
         self._validate_root_folder()
         self._validate_io_folders()
         return 
-       
+    
+    """ Properties """
+    
+    @property
+    def extensions(self) -> dict[str, str]: 
+        """Returns dict of file extensions.
+        
+        Raises:
+            TypeError: when a non-string or non-sequence is discovered in a
+                stored FileFormat's 'extensions' attribute.
+        Returns:
+            dict[str, str]: keys are file extensions and values are the related
+                key to the file_format in the 'formats' attribute.
+        
+        """
+        extensions = {}
+        for key, instance in self.framework.formats.items():
+            if isinstance(instance.extensions, str):
+                extensions[instance.extensions] = key
+            elif isinstance(instance.extensions, Sequence):
+                extensions.update(dict.fromkeys(instance.extensions, key))
+            else:
+                raise TypeError(
+                    f'{instance.extensions} are not valid extension types')
+        return extensions
+                       
     """ Public Methods """
 
     def load(
@@ -341,7 +276,7 @@ class FileManager(object):
                 how the file should be loaded or the key to such an object. 
                 Defaults to None.
             **kwargs: can be passed if additional options are desired specific
-                to the pandas or python method used internally.
+                to the methods attached to a FileFormat instance.
 
         Returns:
             Any: depending upon method used for appropriate file format, a new
@@ -352,10 +287,12 @@ class FileManager(object):
             file_path = file_path,
             folder = folder,
             file_name = file_name,
+            transfer_type = 'load',
             file_format = file_format)
-        parameters = self._get_parameters(file_format = file_format, **kwargs)
-        loader = file_format.instances[file_format]
-        return loader(file_path, **parameters)
+        parameters = self._get_transfer_parameters(
+            file_format = file_format, 
+            **kwargs)
+        return file_format.loader(path = file_path, **parameters)
 
     def save(
         self,
@@ -381,19 +318,19 @@ class FileManager(object):
                 how the file should be loaded or the key to such an object. 
                 Defaults to None.
             **kwargs: can be passed if additional options are desired specific
-                to the pandas or python method used internally.
+                to the methods attached to a FileFormat instance.
 
         """
         file_path, file_format = self._prepare_transfer(
             file_path = file_path,
             folder = folder,
             file_name = file_name,
+            transfer_type = 'save',
             file_format = file_format)
-        parameters = self._get_parameters(file_format = file_format, **kwargs)
-        if file_format.module:
-            getattr(item, file_format.export_method)(item, **parameters)
-        else:
-            getattr(self, file_format.export_method)(item, **parameters)
+        parameters = self._get_transfer_parameters(
+            file_format = file_format, 
+            **kwargs)
+        file_format.saver(item = item, path = file_path, **parameters)
         return
 
     def validate(self, path: pathlib.Path | str) -> pathlib.Path:
@@ -455,15 +392,16 @@ class FileManager(object):
         """
         if hasattr(self, f'{folder}_folder'):
             folder = getattr(self, f'{folder}_folder')
-        if file_name and extension:
+        if file_name and extension and '.' not in file_name:
             return pathlib.Path(folder).joinpath(f'{file_name}.{extension}')
+        elif file_name and '.' in file_name:
+            return pathlib.Path(folder).joinpath(file_name)
         else:
             return pathlib.Path(folder)
 
     def _get_transfer_parameters(
         self,
         file_format: FileFormat, 
-        shared: MutableMapping[str, str],
         **kwargs: Any) -> MutableMapping[Hashable, Any]:
         """Creates complete parameters for a file input/output method.
 
@@ -480,7 +418,7 @@ class FileManager(object):
         if file_format.parameters:
             for specific, common in file_format.parameters.items():
                 if specific not in kwargs:
-                    kwargs[specific] = shared[common]
+                    kwargs[specific] = self.framework.settings[common]
         return kwargs # type: ignore
 
     def _prepare_transfer( 
@@ -488,7 +426,8 @@ class FileManager(object):
         file_path: pathlib.Path | str,
         folder: pathlib.Path | str,
         file_name: str,
-        file_format: str | FileFormat) -> (
+        transfer_type: str,
+        file_format: Optional[str | FileFormat] = None) -> (
             tuple[pathlib.Path, FileFormat]):
         """Prepares file path related arguments for loading or saving a file.
 
@@ -506,24 +445,56 @@ class FileManager(object):
             tuple: of a completed Path instance and FileFormat instance.
 
         """
+        extension = None
         if file_path:
-            file_path = amos.pathlibify(item = file_path)
-            if not file_format:
-                try:
-                    file_format = [f for f in transfer.values()
-                                if f.extension == file_path.suffix[1:]][0]
-                except IndexError:
-                    file_format = [f for f in transfer.values()
-                                if f.extension == file_path.suffix][0]           
+            file_path = self.validate(path = file_path)
+            extension = file_path.suffix[1:] 
+        elif file_name and '.' in file_name:
+            extension = amos.cleave_str(file_name, divider = '.')[-1]
+        if extension and not file_format:
+            file_format = self.extensions[extension]    
         file_format = self._validate_file_format(file_format = file_format)
-        extension = file_format.extension
+        extension = extension or self._get_extension(file_format = file_format)
+        if not folder:
+            if transfer_type == 'save':
+                folder = self.output_folder
+            elif transfer_type == 'load':
+                folder = self.input_folder
+            else:
+                raise ValueError(
+                    'either folder or transfer type must be passed')
         if not file_path:
-            file_path =self._combine_path(
+            file_path = self._combine_path(
                 folder = folder, 
                 file_name = file_name,
                 extension = extension)
         return file_path, file_format
 
+    def _get_extension(self, file_format: str | FileFormat) -> str:
+        """Returns a str file extension.
+
+        Args:
+            file_format (str | FileFormat): name of file format or a FileFormat 
+                instance.
+
+        Raises:
+            KeyError: if 'file_format' is a str but does not match any known
+                file format in 'framework.formats'.
+
+        Returns:
+            str: file extension to use.
+
+        """
+        if isinstance(file_format, str):
+            try:
+                file_format = self.framework.formats[file_format]
+            except KeyError:
+                raise KeyError(f'{file_format} is not a recognized file format')
+        if isinstance(file_format.extensions, str):
+            return file_format.extensions
+        else:
+            return file_format.extensions[0]
+        
     def _validate_file_format(
         self,
         file_format: str | FileFormat) -> FileFormat:
@@ -534,22 +505,23 @@ class FileManager(object):
                 FileFormat instance.
 
         Raises:
+            KeyError: if 'file_format' is a str but does not match any known
+                file format in 'framework.formats'.
             TypeError: if 'file_format' is neither a str nor FileFormat type.
 
         Returns:
             FileFormat: appropriate instance.
 
         """
-        if file_format in transfer:
-            return transfer[file_format]
+        if isinstance(file_format, str):
+            try:
+                return self.framework.formats[file_format]
+            except KeyError:
+                raise KeyError(f'{file_format} is not a recognized file format')
         elif isinstance(file_format, FileFormat):
             return file_format
-        elif (
-            inspect.isclass(file_format) 
-                and issubclass(file_format, FileFormat)):
-            return file_format()
         else:
-            raise TypeError(f'{file_format} is not a recognized file format')
+            raise TypeError(f'{file_format} is not a FileFormat type')
         
     def _validate_io_folder(self, path: str | pathlib.Path) -> pathlib.Path:
         """Validates an import and export path.'
@@ -577,7 +549,7 @@ class FileManager(object):
         io_attributes = [a for a in all_attributes if a.endswith('_folder')]
         for attribute in io_attributes:
             value = getattr(self, attribute)
-            path = self.self._validate_io_folder(path = value)
+            path = self._validate_io_folder(path = value)
             setattr(self, attribute, path)
             self._write_folder(folder = path)
         return
@@ -599,3 +571,24 @@ class FileManager(object):
         """
         pathlib.Path.mkdir(folder, parents = True, exist_ok = True)
         return
+
+
+def add_loader(loader: types.Functiontype) -> None:
+    """Adds a loading function to nagata.
+
+    Args:
+        loader (types.Functiontype): method that loads from a file.
+        
+    """
+    setattr(transfer, loader.__name__, loader)
+    return
+
+def add_saver(saver: types.Functiontype) -> None:
+    """Adds a saving function to nagata.
+
+    Args:
+        saver (types.Functiontype): method that saves a file.
+        
+    """
+    setattr(transfer, saver.__name__, saver)
+    return

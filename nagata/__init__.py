@@ -54,5 +54,6 @@ __author__ = 'Corey Rayburn Yung'
 
 
 from .core import *
+from .formats import *
 from .transfer import *
 from .lazy import *
