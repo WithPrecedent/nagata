@@ -2,13 +2,16 @@
 name = "nagata"
 version = "0.1.1"
 description = "python file management using a common, intuitive syntax"
-authors = ["WithPrecedent <coreyrayburnyung@gmail.com>"]
+authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
+license = "Apache-2.0"
 readme = "README.md"
+homepage = "https://github.com/WithPrecedent/nagata"
+repository = "https://github.com/WithPrecedent/nagata"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-amos = "^0.1.5"
-miller = "^0.1.2"
+amos = "^0.1.10"
+miller = "^0.1.3"
 
 [build-system]
 requires = ["poetry-core"]

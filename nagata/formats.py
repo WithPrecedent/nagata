@@ -1,5 +1,5 @@
 """
-template: file format class and helper functions
+formats: default file formats included out of the box.
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,216 +17,97 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    FileFormat (amos.InstanceFactory): contains data needed for a FileManager-
-        compatible file format.
-    load_text:
-    save_text:
-    load_pickle:
-    save_pickle:
+    Default FileFormat instances. They are not assigned to any values or dict
+        because the act of instancing causes them to be stored in 
+        'FileFramework.formats'.
     
 ToDo:
 
     
 """
 from __future__ import annotations
-from collections.abc import Mapping, MutableSequence
-import dataclasses
-import pathlib
-import sys
-import types
-from typing import Any, ClassVar, Optional, Type, Union
 
-import amos
-import miller
+from . import core
+from . import transfer
 
-from . import lazy
- 
-      
-@dataclasses.dataclass
-class FileFormat(amos.InstanceFactory):
-    """File format information.
 
-    Args:
-        name (Optional[str]): the format name which should match the key when a 
-            FileFormat instance is stored.
-        module (Optional[str]): name of module where object to incorporate is, 
-            which can either be a obi or non-obi module. Defaults to 
-            None.
-        extension (Optional[Union[str, MutableSequence[str]]]): str file 
-            extension(s) to use. If more than one is listed, the first one is 
-            used for saving new files and all will be used for loading. Defaults 
-            to None.
-        loader (Optional[Union[str, types.FunctionType]]): if a str, it is
-            the name of import method in 'module' to use. Otherwise, it should
-            be a function for loading. Defaults to None.
-        saver (Optional[Union[str, types.FunctionType]]): if a str, it is
-            the name of import method in 'module' to use. Otherwise, it should
-            be a function for saved. Defaults to None.
-        parameters (Mapping[str, str]]): shared parameters to use from 
-            configuration settings where the key is the parameter name that the 
-            load or save method should use and the value is the key for the 
-            argument in the shared parameters. Defaults to an empty dict. 
-        instances (ClassVar[amos.Catalog]): project catalog of instances.
-        
-    """
-    name: Optional[str] = None
-    module: Optional[str] = None
-    extension: Optional[Union[str, MutableSequence[str]]] = None
-    loader: Optional[Union[str, types.FunctionType]] = None
-    saver: Optional[Union[str, types.FunctionType]] = None
-    parameters: Mapping[str, str] = dataclasses.field(default_factory = dict)
-    instances: ClassVar[amos.Catalog] = amos.Catalog()
+core.FileFormat(
+    name = 'csv',
+    module = 'pandas',
+    extensions = 'csv',
+    loader = 'read_csv',
+    saver = 'to_csv',
+    parameters = {
+        'encoding': 'file_encoding',
+        'index_col': 'index_column',
+        'header': 'include_header',
+        'low_memory': 'conserve_memory',
+        'nrows': 'test_size'})
+
+core.FileFormat(
+    name = 'excel',
+    module = 'pandas',
+    extensions = ('xlsx', 'xls'),
+    loader = 'read_excel',
+    saver = 'to_excel',
+    parameters = {
+        'index_col': 'index_column',
+        'header': 'include_header',
+        'nrows': 'test_size'})
+
+core.FileFormat(
+    name = 'feather',
+    module = 'pandas',
+    extensions = 'feather',
+    loader = 'read_feather',
+    saver = 'to_feather',
+    parameters = {'nthreads': 'threads'})
+
+core.FileFormat(
+    name = 'hdf',
+    module = 'pandas',
+    extensions = 'hdf',
+    loader = 'read_hdf',
+    saver = 'to_hdf',
+    parameters = {
+        'columns': 'included_columns',
+        'chunksize': 'test_size'})
+
+core.FileFormat(
+    name = 'json',
+    module = 'json',
+    extensions = 'json',
+    loader = 'read_json',
+    saver = 'to_json')
+
+core.FileFormat(
+    name = 'pickle',
+    module = 'pickle',
+    extensions = ['pickle', 'pkl'],
+    loader = transfer.load_pickle,
+    saver = transfer.save_pickle)
+
+core.FileFormat(
+    name = 'png',
+    module = 'seaborn',
+    extensions = 'png',
+    saver = 'save_fig',
+    parameters = {
+        'bbox_inches': 'visual_tightness', 
+        'format': 'visual_format'})
+
+core.FileFormat(
+    name = 'stata',
+    module = 'pandas',
+    extensions = 'dta',
+    loader = 'read_stata',
+    saver = 'to_stata',
+    parameters = {'chunksize': 'test_size'})
+
+core.FileFormat(
+    name = 'text',
+    module = None,
+    extensions = ['txt', 'text'],
+    loader = transfer.load_text,
+    saver = transfer.save_text)
     
-    """ Public Methods """
-    
-    def load(self, path: Union[str, pathlib.Path], **kwargs) -> Any:
-        """[summary]
-
-        Args:
-            path (Union[str, pathlib.Path]): [description]
-
-        Returns:
-            Any: [description]
-            
-        """             
-        method = self._validate_io_method(attribute = 'loader')
-        return method(path, **kwargs)
-    
-    def save(self, item: Any, path: Union[str, pathlib.Path], **kwargs) -> None:
-        """[summary]
-
-        Args:
-            item (Any): [description]
-            path (Union[str, pathlib.Path]): [description]
-
-        Returns:
-            [type]: [description]
-            
-        """        
-        method = self._validate_io_method(attribute = 'saver')
-        method(item, path, **kwargs)
-        return self
-    
-    """ Private Methods """
-    
-    def _validate_io_method(self, attribute: str) -> types.FunctionType:
-        """[summary]
-
-        Args:
-            attribute (str): [description]
-
-        Raises:
-            AttributeError: [description]
-            ValueError: [description]
-
-        Returns:
-            types.FunctionType: [description]
-            
-        """        
-        value = getattr(self, attribute)
-        if isinstance(value, str):
-            if self.module is None:
-                try:
-                    method = getattr(self, value)
-                except AttributeError:
-                    try:
-                        method = locals()[value]
-                    except AttributeError:
-                        raise AttributeError(
-                            f'{value} {attribute} could not be found')
-            else:
-                method = lazy.from_import_path(
-                    path = value, 
-                    package = self.module)
-            setattr(self, attribute, method)
-        if not isinstance(value, types.FunctionType):
-            raise ValueError(
-                f'{attribute} must be a str, function, or method')
-        return method
-            
-    """ Dunder Methods """
-    
-    @classmethod
-    def __subclasshook__(cls, subclass: Type[Any]) -> bool:
-        """Returns whether 'subclass' is a virtual or real subclass.
-
-        Args:
-            subclass (Type[Any]): item to test as a subclass.
-
-        Returns:
-            bool: whether 'subclass' is a real or virtual subclass.
-            
-        """
-        return (
-            subclass in cls.__subclasses__() 
-            or (
-                miller.has_attributes(
-                    item = subclass,
-                    attributes = [
-                        'name', 'module', 'extension', 'loader',
-                        'saver', 'parameters'])
-                and miller.has_methods(
-                    item = subclass,
-                    methods = ['load', 'save'])))
-
-
-""" Public Functions """
-
-def load_text(path: Union[str, pathlib.Path], **kwargs) -> str:
-    """[summary]
-
-    Args:
-        path (Union[str, pathlib.Path]): [description]
-
-    Returns:
-        str: [description]
-        
-    """    
-    _file = open(path, 'r', **kwargs)
-    loaded = _file.read()
-    _file.close()
-    return loaded
-
-def save_text(item: Any, path: Union[str, pathlib.Path], **kwargs) -> None:
-    """[summary]
-
-    Args:
-        item (Any): [description]
-        path (Union[str, pathlib.Path]): [description]
-        
-    """    
-    _file = open(path, 'w', **kwargs)
-    _file.write(item)
-    _file.close()
-    return
-
-def load_pickle(path: Union[str, pathlib.Path], **kwargs) -> str:
-    """[summary]
-
-    Args:
-        path (Union[str, pathlib.Path]): [description]
-
-    Returns:
-        str: [description]
-        
-    """   
-    _file = open(path, 'r', **kwargs)
-    loaded = sys.modules['pickle'].load(_file)
-    _file.close()
-    return loaded
-
-def save_pickle(
-    item: Any, 
-    path: Union[str, pathlib.Path], 
-    **kwargs) -> None:
-    """[summary]
-
-    Args:
-        item (Any): [description]
-        path (Union[str, pathlib.Path]): [description]
-        
-    """   
-    _file = open(path, 'w', **kwargs)
-    sys.modules['pickle'].dump(item, _file)
-    _file.close()
-    return

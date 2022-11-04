@@ -1,5 +1,5 @@
 """
-lazy: lazy importing and loading classes and functions
+lazy: lazy importing classes and functions
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -40,18 +40,18 @@ import importlib.util
 import pathlib
 import sys
 import types
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, ClassVar, Optional
 
 
 """ Importing Tools """
 
 def from_path(
-    path: Union[str, pathlib.Path], 
+    path: pathlib.Path | str, 
     name: Optional[str] = None) -> Any:
     """Imports and returns module from import or file path at 'name'.
 
     Args:
-        path (Union[pathlib.Path, str]): import or file path of module to load.
+        path (pathlib.Path | str): import or file path of module to load.
         name (Optional[str]): name to store module at in 'sys.modules'. If it
             is None, the stem of 'path' is used. Defaults to None.
             
@@ -65,12 +65,12 @@ def from_path(
         return from_import_path(path = path)
 
 def from_file_path(
-    path: Union[pathlib.Path, str], 
+    path: pathlib.Path | str, 
     name: Optional[str] = None) -> types.ModuleType:
     """Imports and returns module from file path at 'name'.
 
     Args:
-        path (Union[pathlib.Path, str]): file path of module to load.
+        path (pathlib.Path | str): file path of module to load.
         name (Optional[str]): name to store module at in 'sys.modules'. If it
             is None, the stem of 'path' is used. Defaults to None.
     Returns:
@@ -195,8 +195,8 @@ def from_importables(
     which outlines how the decision to incorporate '__getattr__' functions to 
     modules allows lazy loading. Rather than place this function solely within
     '__getattr__', it is included here seprately so that it can easily be called 
-    by '__init__.py' files throughout obi and by users (as 
-    'obi.load.from_dict').
+    by '__init__.py' files throughout nagata and by users (as 
+    'nagata.load.from_dict').
     
     To effectively use 'from_dict' in an '__init__.py' file, the user needs to 
     pass a 'importables' dict which indicates how users should accesss imported 
@@ -231,9 +231,9 @@ def from_importables(
         Any: a module or item stored within a module.
         
     """
-    if name in importables:
+    try:
         return from_import_path(path = importables[name], package = package)
-    else:
+    except KeyError:
         raise KeyError(f'{name} is not in importables') 
 
 
@@ -241,19 +241,18 @@ def from_importables(
 
 @dataclasses.dataclass
 class Importer(object):
-    """Lazy importer that converts a dict to loadable .
+    """Lazy importer that uses a dict to lazily import items.
+    
+    Args:
+        package (str): name of package to which the 'importables' are linked.
+        importables (Optional[MutableMapping[str, str]]): dict keys are names
+            used to refer to importable item and values are the import paths of
+            the importable items. Defaults to an empty dict.
     
     """
     package: str
-    importables: MutableMapping[str, str] = dataclasses.field(
+    importables: Optional[MutableMapping[str, str]] = dataclasses.field(
         default_factory = dict)
-    registry: ClassVar[MutableMapping[str, Importer]] = {}
-    
-    """ Initialization Methods """
-    
-    def __post_init__(self) -> None:
-        # Stores instance in the class registry.
-        self.__class__.registry[self.package] = self
         
     """ Public Methods """
     
@@ -279,8 +278,8 @@ class Delayed(object):
     # Only str values of attributes with a '.' in them are assumed to be import
     # paths.
     
-    After an item is imported, it is assigned to the formerly str attribute so
-    that it does not need to be reloaded.
+    After an item is imported, it is assigned to the attribute which previously
+    held the str import path so that it does not need to be reloaded.
     
     """
  

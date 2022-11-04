@@ -18,11 +18,9 @@ License: Apache-2.0
     
     
 ToDo:
-    Add tests
-   
-"""
 
-"""
+   
+
 For Developers:
 
 As with all of my packages, I use Google-style docstrings and follow the Google 
@@ -48,13 +46,13 @@ any other package maintainer - I want to ensure the package is as accessible and
 useful as possible.
      
 """
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 __package__ = 'nagata'
 
 __author__ = 'Corey Rayburn Yung'
 
 
-from .base import *
-from .formats import *
+from .core import *
+from .transfer import *
 from .lazy import *
