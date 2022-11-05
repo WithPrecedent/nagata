@@ -31,7 +31,6 @@ import nagata
 
    
 def test_all() -> None:
-    
     manager = nagata.FileManager(
         root_folder = pathlib.Path('.').joinpath('tests'),
         input_folder = 'dummy_folder',

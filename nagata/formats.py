@@ -34,14 +34,9 @@ import importlib
 import importlib.util
 import pathlib
 import sys
-import types
 from typing import Any, ClassVar, Optional, Type
 
-import amos
-import miller
-
 from . import core
-from . import transfer
 
 
 @dataclasses.dataclass
@@ -172,31 +167,46 @@ class FileFormatPandas(core.FileFormat, abc.ABC):
 
     """ Public Methods """
     
-    def load(self, path: pathlib.Path | str, **kwargs) -> Any:
-        """Loads a text file.
+    def load(self, path: pathlib.Path | str, **kwargs) -> object:
+        """Loads a file to a pandas dataframe.
 
         Args:
-            path (pathlib.Path | str): path to text file.
+            path (pathlib.Path | str): path to pandas dataframe.
 
+        Raises:
+            NotImplementedError: if 'loader' is None.
+            
         Returns:
-            str: text contained within the loaded file.
+            object: pandas dataframe.
             
         """
-        if 'pandas' not in sys.modules:
-            import pandas 
-        loader = getattr(pandas, self.loader)
-        return loader(path, **kwargs)
+        
+        if self.loader is None:
+            raise NotImplementedError(
+                'pandas does not support loading for this data type')
+        else:
+            if 'pandas' not in sys.modules:
+                import pandas 
+            loader = getattr(pandas, self.loader)
+            return loader(path, **kwargs)
     
-    def save(self, item: Any, path: pathlib.Path | str, **kwargs) -> None:
-        """Saves str 'item' to a file at 'path'.
+    def save(self, item: object, path: pathlib.Path | str, **kwargs) -> None:
+        """Saves dataframe 'item' to a file at 'path'.
 
         Args:
-            item (str): str item to save to a text file.
+            item (object): pandas dataframe.
             path (pathlib.Path | str): path to which 'item' should be saved.
-            
-        """    
-        saver = getattr(item, self.saver)
-        saver(path, **kwargs)
+
+        Raises:
+            NotImplementedError: if 'saver' is None.
+                        
+        """ 
+        if self.saver is None:
+            raise NotImplementedError(
+                'pandas does not support saving to this data type')   
+        else:
+            saver = getattr(item, self.saver)
+            saver(path, **kwargs)
         return   
 
 
@@ -221,13 +231,11 @@ class FileFormatCSV(FileFormatPandas):
         'encoding': 'file_encoding',
         'index_col': 'index_column',
         'header': 'header',
-        'low_memory': 'conserve_memory',
         'nrows': 'test_size'}
     save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
         'encoding': 'file_encoding',
         'header': 'header',
-        'low_memory': 'conserve_memory',
-        'nrows': 'test_size'}
+        'index': 'index_column'}
     loader: ClassVar[str] = 'read_csv'
     saver: ClassVar[str] = 'to_csv'
 
@@ -249,170 +257,287 @@ class FileFormatExcel(FileFormatPandas):
         
     """
     extensions: ClassVar[str | Sequence[str]] = ('xlsx', 'xls')
-    parameters: ClassVar[Optional[Mapping[str, str]]] = {
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'usecols': 'included_columns',
         'index_col': 'index_column',
         'header': 'header',
         'nrows': 'test_size'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'header': 'header',
+        'index': 'index_column'}
     loader: ClassVar[str] = 'read_excel'
     saver: ClassVar[str] = 'to_excel'
+    
+
+@dataclasses.dataclass
+class FileFormatFeather(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'feather'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'columns': 'included_columns'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    loader: ClassVar[str] = 'read_feather'
+    saver: ClassVar[str] = 'to_feather'
+
+
+@dataclasses.dataclass
+class FileFormatHDF(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = ('hdf', 'hdf5')
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'columns': 'included_columns',
+        'chunksize': 'test_size'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    loader: ClassVar[str] = 'read_hdf'
+    saver: ClassVar[str] = 'to_hdf'
+    
+
+@dataclasses.dataclass
+class FileFormatJSON(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'json'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'encoding': 'file_encoding',
+        'nrows': 'test_size'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'encoding': 'file_encoding'}
+    loader: ClassVar[str] = 'read_json'
+    saver: ClassVar[str] = 'to_json'
+ 
+
+@dataclasses.dataclass
+class FileFormatLatex(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'latex'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'encoding': 'file_encoding',
+        'header': 'header',
+        'index': 'index_column'}
+    loader: ClassVar[str] = None
+    saver: ClassVar[str] = 'to_latex'
+
+
+@dataclasses.dataclass
+class FileFormatParquet(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'parquet'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'columns': 'included_columns'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'index': 'index_column'}
+    loader: ClassVar[str] = 'read_parquet'
+    saver: ClassVar[str] = 'to_parquet'
+   
+
+@dataclasses.dataclass
+class FileFormatSTATA(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'dta'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'columns': 'included_columns',
+        'index_col': 'index_column',
+        'header': 'header',
+        'chunksize': 'test_size'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    loader: ClassVar[str] = 'read_stata'
+    saver: ClassVar[str] = 'to_stata'
+  
+
+@dataclasses.dataclass
+class FileFormatSQL(FileFormatPandas):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'sql'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'columns': 'included_columns',
+        'index_col': 'index_column',
+        'chunksize': 'test_size'}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'index': 'index_column'}
+    loader: ClassVar[str] = 'read_sql_table'
+    saver: ClassVar[str] = 'to_sql'
+
+
+@dataclasses.dataclass
+class FileFormatSeaborn(core.FileFormat, abc.ABC):
+    """File format information, loader, and saver.
+
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = None
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    loader: ClassVar[str] = None
+    saver: ClassVar[str] = None
+
+
+    """ Public Methods """
+    
+    def load(self, path: pathlib.Path | str, **kwargs) -> object:
+        """Loads a file to a pandas dataframe.
+
+        Args:
+            path (pathlib.Path | str): path to pandas dataframe.
+
+        Raises:
+            NotImplementedError: if 'loader' is None.
             
-# core.FileFormat(
-#     name = 'csv',
-#     module = 'pandas',
-#     extensions = 'csv',
-#     loader = ('pandas', 'read_csv'),
-#     saver = ('pandas.DataFrame', 'to_csv'),
-#     parameters = {
-#         'encoding': 'file_encoding',
-#         'index_col': 'index_column',
-#         'header': 'header',
-#         'low_memory': 'conserve_memory',
-#         'nrows': 'test_size'})
-
-# core.FileFormat(
-#     name = 'excel',
-#     module = 'pandas',
-#     extensions = ('xlsx', 'xls'),
-#     loader = 'read_excel',
-#     saver = 'DataFrame.to_excel',
-#     parameters = {
-#         'index_col': 'index_column',
-#         'header': 'header',
-#         'nrows': 'test_size'})
-
-# core.FileFormat(
-#     name = 'feather',
-#     module = 'pandas',
-#     extensions = 'feather',
-#     loader = 'read_feather',
-#     saver = 'DataFrame.to_feather',
-#     parameters = {'nthreads': 'threads'})
-
-# core.FileFormat(
-#     name = 'hdf',
-#     module = 'pandas',
-#     extensions = ('hdf', 'hdf5'),
-#     loader = 'read_hdf',
-#     saver = 'DataFrame.to_hdf',
-#     parameters = {
-#         'columns': 'included_columns',
-#         'chunksize': 'test_size'})
-
-# core.FileFormat(
-#     name = 'json',
-#     module = 'json',
-#     extensions = 'json',
-#     loader = 'read_json',
-#     saver = 'DataFrame.to_json')
-
-# core.FileFormat(
-#     name = 'pickle',
-#     module = None,
-#     extensions = ['pickle', 'pkl'],
-#     loader = transfer.load_pickle,
-#     saver = transfer.save_pickle)
-
-# core.FileFormat(
-#     name = 'png',
-#     module = 'seaborn',
-#     extensions = 'png',
-#     saver = 'save_fig',
-#     parameters = {
-#         'bbox_inches': 'visual_tightness', 
-#         'format': 'visual_format'})
-
-# core.FileFormat(
-#     name = 'stata',
-#     module = 'pandas',
-#     extensions = 'dta',
-#     loader = 'read_stata',
-#     saver = 'DataFrame.to_stata',
-#     parameters = {'chunksize': 'test_size'})
-
-# core.FileFormat(
-#     name = 'text',
-#     module = None,
-#     extensions = ['txt', 'text'],
-#     loader = transfer.load_text,
-#     saver = transfer.save_text)
+        Returns:
+            object: pandas dataframe.
+            
+        """
+        
+        if self.loader is None:
+            raise NotImplementedError(
+                'seaborn does not support loading for this data type')
+        else:
+            if 'seaborn' not in sys.modules:
+                import seaborn
+            loader = getattr(seaborn, self.loader)
+            return loader(path, **kwargs)
     
-# core.FileFormat(
-#     name = 'csv',
-#     module = 'pandas',
-#     extensions = 'csv',
-#     loader = ('pandas', 'read_csv'),
-#     saver = ('pandas.DataFrame', 'to_csv'),
-#     parameters = {
-#         'encoding': 'file_encoding',
-#         'index_col': 'index_column',
-#         'header': 'header',
-#         'low_memory': 'conserve_memory',
-#         'nrows': 'test_size'})
+    def save(self, item: object, path: pathlib.Path | str, **kwargs) -> None:
+        """Saves dataframe 'item' to a file at 'path'.
 
-# core.FileFormat(
-#     name = 'excel',
-#     module = 'pandas',
-#     extensions = ('xlsx', 'xls'),
-#     loader = 'read_excel',
-#     saver = 'DataFrame.to_excel',
-#     parameters = {
-#         'index_col': 'index_column',
-#         'header': 'header',
-#         'nrows': 'test_size'})
+        Args:
+            item (object): pandas dataframe.
+            path (pathlib.Path | str): path to which 'item' should be saved.
 
-# core.FileFormat(
-#     name = 'feather',
-#     module = 'pandas',
-#     extensions = 'feather',
-#     loader = 'read_feather',
-#     saver = 'DataFrame.to_feather',
-#     parameters = {'nthreads': 'threads'})
+        Raises:
+            NotImplementedError: if 'saver' is None.
+                        
+        """ 
+        if self.saver is None:
+            raise NotImplementedError(
+                'seaborn does not support saving to this data type')   
+        else:
+            saver = getattr(item, self.saver)
+            saver(path, **kwargs)
+        return    
+  
 
-# core.FileFormat(
-#     name = 'hdf',
-#     module = 'pandas',
-#     extensions = ('hdf', 'hdf5'),
-#     loader = 'read_hdf',
-#     saver = 'DataFrame.to_hdf',
-#     parameters = {
-#         'columns': 'included_columns',
-#         'chunksize': 'test_size'})
+@dataclasses.dataclass
+class FileFormatPNG(FileFormatSeaborn):
+    """File format information, loader, and saver.
 
-# core.FileFormat(
-#     name = 'json',
-#     module = 'json',
-#     extensions = 'json',
-#     loader = 'read_json',
-#     saver = 'DataFrame.to_json')
-
-# core.FileFormat(
-#     name = 'pickle',
-#     module = None,
-#     extensions = ['pickle', 'pkl'],
-#     loader = transfer.load_pickle,
-#     saver = transfer.save_pickle)
-
-# core.FileFormat(
-#     name = 'png',
-#     module = 'seaborn',
-#     extensions = 'png',
-#     saver = 'save_fig',
-#     parameters = {
-#         'bbox_inches': 'visual_tightness', 
-#         'format': 'visual_format'})
-
-# core.FileFormat(
-#     name = 'stata',
-#     module = 'pandas',
-#     extensions = 'dta',
-#     loader = 'read_stata',
-#     saver = 'DataFrame.to_stata',
-#     parameters = {'chunksize': 'test_size'})
-
-# core.FileFormat(
-#     name = 'text',
-#     module = None,
-#     extensions = ['txt', 'text'],
-#     loader = transfer.load_text,
-#     saver = transfer.save_text)
-    
+    Args:
+        extensions (Optional[Union[str, Sequence[str]]]): str file extension(s)
+            associated with the format. If more than one is listed, the first 
+            one is used for saving new files and all will be used for loading. 
+            Defaults to None.
+        parameters (Mapping[str, str]]): shared parameters to use from the pool 
+            of settings in FileFramework.settings where the key is the parameter 
+            name that the load or save method should use and the value is the 
+            key for the argument in the shared parameters. Defaults to an empty 
+            dict. 
+        
+    """
+    extensions: ClassVar[str | Sequence[str]] = 'png'
+    load_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
+    save_parameters: ClassVar[Optional[Mapping[str, str]]] = {
+        'bbox_inches': 'visual_tightness', 
+        'format': 'visual_format'}
+    loader: ClassVar[str] = None
+    saver: ClassVar[str] = 'save_fig'
+ 

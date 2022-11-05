@@ -83,13 +83,6 @@ class FileFormat(abc.ABC):
     extensions: ClassVar[str | Sequence[str]] = None
     load_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
     save_parameters: ClassVar[Optional[Mapping[str, str]]] = {}
-    # name: str
-    # extensions: str | Sequence[str] = None
-    # # saver: str | types.FunctionType
-    # # loader: Optional[str | types.FunctionType] = None
-    # # module: Optional[str] = None
-    # parameters: Optional[Mapping[str, str]] = dataclasses.field(
-    #     default_factory = dict)
     
     """ Initialization Methods """
     
@@ -102,9 +95,7 @@ class FileFormat(abc.ABC):
             key = amos.namify(item = cls)
             if key.startswith('file_format_'):
                 key = key[12:]
-            print('test key', key)
             FileFramework.formats[key] = cls(*args, **kwargs)
-            print('test formats as we go', FileFramework.formats)
                     
     # def __post_init__(self) -> None:
     #     """Automatically registers subclass."""
@@ -266,7 +257,6 @@ class FileManager(object):
                 key to the file_format in the 'formats' attribute.
         
         """
-        print('test formats', self.framework.formats)
         extensions = {}
         for key, instance in self.framework.formats.items():
             if isinstance(instance.extensions, str):
@@ -317,8 +307,8 @@ class FileManager(object):
             file_format = file_format)
         parameters = self._get_transfer_parameters(
             file_format = file_format, 
+            transfer_type = 'load',
             **kwargs)
-        print('test path',file_path)
         return file_format.load(path = file_path, **parameters)
 
     def save(
@@ -356,6 +346,7 @@ class FileManager(object):
             file_format = file_format)
         parameters = self._get_transfer_parameters(
             file_format = file_format, 
+            transfer_type = 'save',
             **kwargs)
         file_format.save(item = item, path = file_path, **parameters)
         return
@@ -429,6 +420,7 @@ class FileManager(object):
     def _get_transfer_parameters(
         self,
         file_format: FileFormat, 
+        transfer_type: str,
         **kwargs: Any) -> MutableMapping[Hashable, Any]:
         """Creates complete parameters for a file input/output method.
 
@@ -442,8 +434,9 @@ class FileManager(object):
                 input/output method.
 
         """
-        if file_format.parameters:
-            for specific, common in file_format.parameters.items():
+        parameters = getattr(file_format, f'{transfer_type}_parameters')
+        if parameters:
+            for specific, common in parameters.items():
                 if specific not in kwargs:
                     kwargs[specific] = self.framework.settings[common]
         return kwargs # type: ignore
@@ -598,24 +591,4 @@ class FileManager(object):
         """
         pathlib.Path.mkdir(folder, parents = True, exist_ok = True)
         return
-
-
-def add_loader(loader: types.Functiontype) -> None:
-    """Adds a loading function to nagata.
-
-    Args:
-        loader (types.Functiontype): method that loads from a file.
-        
-    """
-    setattr(transfer, loader.__name__, loader)
-    return
-
-def add_saver(saver: types.Functiontype) -> None:
-    """Adds a saving function to nagata.
-
-    Args:
-        saver (types.Functiontype): method that saves a file.
-        
-    """
-    setattr(transfer, saver.__name__, saver)
-    return
+    
