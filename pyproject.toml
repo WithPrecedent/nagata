@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nagata"
-version = "0.1.2"
+version = "0.1.3"
 description = "python file management using a common, intuitive syntax"
 authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
 license = "Apache-2.0"
