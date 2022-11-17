@@ -40,7 +40,7 @@ import pathlib
 import types
 from typing import Any, ClassVar, Optional, Type
 
-import amos
+import camina
 import miller
 
 from . import lazy
@@ -92,7 +92,7 @@ class FileFormat(abc.ABC):
         with contextlib.suppress(AttributeError):
             super().__init_subclass__(*args, **kwargs) # type: ignore
         if abc.ABC not in cls.__bases__:
-            key = amos.namify(item = cls)
+            key = camina.namify(item = cls)
             if key.startswith('file_format_'):
                 key = key[12:]
             FileFramework.formats[key] = cls(*args, **kwargs)
@@ -101,7 +101,7 @@ class FileFormat(abc.ABC):
     #     """Automatically registers subclass."""
     #     with contextlib.suppress(AttributeError):
     #         super().__post_init__(*args, **kwargs) # type: ignore
-    #     key = amos.namify(item = self)
+    #     key = camina.namify(item = self)
     #     FileFramework.formats[key] = self
 
     # """ Public Methods """
@@ -197,7 +197,7 @@ class FileFramework(abc.ABC):
         'threads': -1,
         'visual_tightness': 'tight', 
         'visual_format': 'png'}
-    formats: amos.Dictionary[str, FileFormat] = amos.Dictionary()
+    formats: camina.Dictionary[str, FileFormat] = camina.Dictionary()
   
    
 @dataclasses.dataclass
@@ -470,7 +470,7 @@ class FileManager(object):
             file_path = self.validate(path = file_path)
             extension = file_path.suffix[1:] 
         elif file_name and '.' in file_name:
-            extension = amos.cleave_str(file_name, divider = '.')[-1]
+            extension = camina.cleave_str(file_name, divider = '.')[-1]
         if extension and not file_format:
             file_format = self.extensions[extension]    
         file_format = self._validate_file_format(file_format = file_format)
