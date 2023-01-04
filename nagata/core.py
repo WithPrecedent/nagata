@@ -92,7 +92,7 @@ class FileFormat(abc.ABC):
         with contextlib.suppress(AttributeError):
             super().__init_subclass__(*args, **kwargs) # type: ignore
         if abc.ABC not in cls.__bases__:
-            key = camina.namify(item = cls)
+            key = camina.namify(cls)
             if key.startswith('file_format_'):
                 key = key[12:]
             FileFramework.formats[key] = cls(*args, **kwargs)
@@ -101,7 +101,7 @@ class FileFormat(abc.ABC):
     #     """Automatically registers subclass."""
     #     with contextlib.suppress(AttributeError):
     #         super().__post_init__(*args, **kwargs) # type: ignore
-    #     key = camina.namify(item = self)
+    #     key = camina.namify(self)
     #     FileFramework.formats[key] = self
 
     # """ Public Methods """

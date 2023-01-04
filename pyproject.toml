@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nagata"
-version = "0.1.4"
+version = "0.1.5"
 description = "python file management using a common, intuitive syntax"
 authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
 license = "Apache-2.0"
@@ -10,8 +10,8 @@ repository = "https://github.com/WithPrecedent/nagata"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-camina = "^0.1.10"
-miller = "^0.1.4"
+camina = "^0.1.11"
+miller = "^0.1.7"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
