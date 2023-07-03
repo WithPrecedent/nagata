@@ -34,10 +34,7 @@ import abc
 from collections.abc import Hashable, Mapping, MutableMapping, Sequence
 import contextlib
 import dataclasses
-import importlib
-import importlib.util
 import pathlib
-import types
 from typing import Any, ClassVar, Optional, Type
 
 import camina
@@ -197,7 +194,7 @@ class FileFramework(abc.ABC):
         'threads': -1,
         'visual_tightness': 'tight', 
         'visual_format': 'png'}
-    formats: camina.Dictionary[str, FileFormat] = camina.Dictionary()
+    formats: ClassVar[camina.Dictionary[str, FileFormat]] = camina.Dictionary()
   
    
 @dataclasses.dataclass
