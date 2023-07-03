@@ -1,5 +1,5 @@
 """
-test_miller: tests functions and classes in the miller packae
+test_nagata: tests functions and classes in the nagata package
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -21,11 +21,7 @@ ToDo:
     
 """
 from __future__ import annotations
-import dataclasses
-import inspect
 import pathlib
-import types
-from typing import Any, ClassVar
 
 import nagata
 
