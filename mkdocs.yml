@@ -1,42 +1,42 @@
-# nagata documentation rules and instructions
-# Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-# Copyright 2023, Corey Rayburn Yung
-# License: Apache-2.0
+# Project Documentation Rules and Instructions
 
 # Project Information
 
 site_name: nagata
-site_description: Extensible, lightweight, accessible constructors
+site_description: 
 site_url: https://WithPrecedent.github.io/nagata
-# site_dir: "site"
-# repo_name: WithPrecedent/nagata
+repo_name: WithPrecedent/nagata
 repo_url: https://github.com/WithPrecedent/nagata
-# edit_uri: blob/main/docs/
-watch: [mkdocs.yml, docs/README.md, CONTRIBUTING.md, CHANGELOG.md, src/nagata]
-copyright: Copyright &copy; 2023 Corey Rayburn Yung
+watch: [
+  mkdocs.yml,
+  README.md,
+  CONTRIBUTING.md,
+  CHANGELOG.md,
+  src/nagata]
+copyright: Copyright, 2023 Corey Rayburn Yung
 docs_dir: docs
 
 # Documentation Structure
 
 nav:
 - Home:
-  - Overview: README.md
+  - Overview: index.md
   - Changelog: changelog.md
   - Credits: credits.md
   - License: license.md
-- User Guide: user_guide.md
+- User Guide:
+  - Design: design.md
+  - Recipes: recipes.md
 - API: reference/
 - Development:
   - Contributing: contributing.md
   - Code of Conduct: code_of_conduct.md
-  - Coverage Report: coverage.md
+  # - Coverage Report: coverage.md
 
 # Documentation Appearance
 
 theme:
   name: material
-  logo: assets/top_hat.png
-  favicon: assets/top_hat.png
   locale: en
   icon:
     repo: fontawesome/brands/github
@@ -63,7 +63,7 @@ theme:
     toggle:
       icon: material/brightness-auto
       name: Switch to light mode
-  - media: "(prefers-color-scheme: lighht)"
+  - media: "(prefers-color-scheme: light)"
     scheme: default
     primary: teal
     accent: purple
@@ -77,7 +77,6 @@ theme:
     toggle:
       icon: material/weather-night
       name: Switch to system preference
-  # use_directory_urls: false
 
 # Extras, Extensions, and Plugins
 
@@ -112,15 +111,13 @@ markdown_extensions:
     permalink: true
 
 plugins:
-- coverage:
-    page_name: coverage
-    html_report_dir: htmlcov
+- autorefs
+# - coverage:
+#     page_name: coverage
+#     html_report_dir: htmlcov
 - gen-files:
     scripts:
-    - scripts/gen_ref_nav.py
-- git-committers:
-    enabled: !ENV [DEPLOY, false]
-    repository: WithPrecedent/nagata
+    - docs/scripts/gen_ref_nav.py
 - literate-nav:
     nav_file: SUMMARY.md
 - markdown-exec:
@@ -135,13 +132,11 @@ plugins:
           docstring_section_style: table
           filters:
             - "!^__"
-          members_order: alphabetical
+          heading_level: 1
+          # members_order: alphabetical
           merge_init_into_class: true
           separate_signature: false
           show_signature_annotations: false
-          show_submodules: true
-# - render_swagger:
-#     title: API Reference        
 - search:
 
 extra:
