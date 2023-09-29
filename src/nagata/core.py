@@ -1,20 +1,4 @@
-"""
-core: base classes for file management
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+"""Base classes for file management
 
 Contents:
     FileFormat (object): base class for defining rules and methods for different
@@ -24,21 +8,23 @@ Contents:
     FileManager (object): interface for nagata file management. It provides a
         one-stop place for loading and saving all files of supported file types 
         in an organizational structure specified by the user.
-    
-ToDo:
 
-    
+To Do:
+
+
 """
 from __future__ import annotations
+
 import abc
-from collections.abc import Hashable, Mapping, MutableMapping, Sequence
 import contextlib
 import dataclasses
 import pathlib
+from collections.abc import Hashable, Mapping, MutableMapping, Sequence
 from typing import Any, ClassVar, Optional, Type
 
-import camina
 import miller
+
+import camina
 
 from . import lazy
 

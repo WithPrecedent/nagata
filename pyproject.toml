@@ -6,7 +6,7 @@ description = "Python file management using a common, intuitive syntax"
 authors = [{name = "Corey Rayburn Yung", email = "coreyrayburnyung@gmail.com"}]
 license = {text = "Apache Software License 2.0"}
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dynamic = ["version"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -16,15 +16,10 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Topic :: Desktop Environment :: File Managers",
+    "Topic :: File Formats",
     "Topic :: Software Development"]
-keywords = [
-    "disc",
-    "disk",
-    "export",
-    "files",
-    "import",
-    "read",
-    "write"]
+keywords = []
 dependencies = [
     "camina >= 0.1.16",
     "miller >= 0.1.6"]
@@ -40,7 +35,9 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm]
-plugins = ["sync-pre-commit-lock[pdm]", "pdm-multirun"]
+plugins = [
+    "sync-pre-commit-lock[pdm]", 
+    "pdm-multirun"]
 
 [tool.pdm.build]
 package-dir = "src"
@@ -71,7 +68,7 @@ tests = [
 
 [tool.pdm.version]
 source = "file"
-path = "src/nagata/__init__.py"
+path = "src/camina/__init__.py"
 
 [tool.pytest.ini_options]
 addopts = "--showlocals"
@@ -94,6 +91,7 @@ ignore = [
     "D105",  # Missing docstring in magic method
     "D400",  # First line must end in a period
     "D401",  # First line of docstring should be in imperative mood
+    "D406",  # Section name should end with a newline - bugged for 'Attributes:'
     "D407",  # Missing dashed underline after section ("Args")
     "D415",  # First line must end in a period, question mark, or exclamation point
     "E501",  # Line too long
@@ -102,6 +100,7 @@ ignore = [
     "EXE002",  # No shebang is present in an executable file
     "FBT001",  # Boolean positional arg in function definition
     "G004",  # Logging statement uses f-string
+    "PTH123",  # `open()` should be replaced by `Path.open()`
     "PLR0911",  # Too many return statements
     "PLR0912",  # Too many branches
     "PLR0913",  # Too many arguments to function call
@@ -109,9 +108,11 @@ ignore = [
     "PLR1711", # Useless 'return' at the end of function
     "Q000",  # Single quotes found but double quotes preferred
     # "S0001",  # Use of assert detected
+    "RET505",  # Unnecessary `else` after `return` statement
     "SLF001", # Private member accessed
     "TID252",  # Relative imports are banned
-    "TRY003",]  # Avoid specifying long messages outside the exception class
+    "TRY003",  # Avoid specifying long messages outside the exception class
+    "UP004"]  # Class inherits from `object`
     # "W0105",  # String statement has no effect
     # "W0221",  # Arguments differ
     # "W0222",]  # Access to a protected member
@@ -167,8 +168,14 @@ select = [
     "W",  # pydocstyle warnings
     "YTT",]  # flake8-2020
 
+[tool.ruff.flake8-annotations]
+suppress-none-returning = true
+
 [tool.ruff.flake8-quotes]
 docstring-quotes = "double"
 
 [tool.ruff.isort]
-known-first-party = ["nagata"]
+case-sensitive = true
+known-first-party = ["camina"]
+required-imports = ["from __future__ import annotations"]
+split-on-trailing-comma = false
