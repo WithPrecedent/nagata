@@ -44,9 +44,9 @@ def _cleave_str(
     """
     if divider in item:
         if return_last:
-            suffix = item.split(divider)[-1]
+            suffix = item.rsplit(divider, maxsplit = 1)[-1]
         else:
-            suffix = item.split(divider)[0]
+            suffix = item.split(divider, maxsplit = 1)[0]
         prefix = item[:-len(suffix) - 1]
     elif raise_error:
         raise ValueError(f'{divider} is not in {item}')
@@ -106,7 +106,7 @@ def _iterify(item: Any) -> Iterable:
             return iter((item,))
 
 def _name_attributes(
-    item: Any,
+    item: Any, *,
     include_private: bool = False) -> list[str]:
     """Returns attribute names of 'item'.
 

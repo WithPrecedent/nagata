@@ -19,7 +19,6 @@ import abc
 import contextlib
 import dataclasses
 import pathlib
-import sys
 from collections.abc import (
     Hashable,
     Mapping,
@@ -31,14 +30,11 @@ from typing import Any, ClassVar, TypeAlias, Unpack
 
 from . import descriptors, utilities
 
-if sys.version_info < (3, 12):
-    GenericDict: TypeAlias = MutableMapping[Hashable, Any]
-    GenericList: TypeAlias = MutableSequence[Any]
-    Kwargs: TypeAlias = Unpack[GenericDict]
-else:
-    type GenericDict = MutableMapping[Hashable, Any]
-    type GenericList = MutableSequence[Any]
-    type Kwargs = Unpack[GenericDict]
+# `TypeAlias` is used instead of the `type` statement (Python 3.12+) so that
+# this module can be parsed on every supported Python version.
+GenericDict: TypeAlias = MutableMapping[Hashable, Any]
+GenericList: TypeAlias = MutableSequence[Any]
+Kwargs: TypeAlias = Unpack[GenericDict]
 
 
 @dataclasses.dataclass

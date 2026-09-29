@@ -100,21 +100,22 @@ def from_import_path(path: str, package: str | None = None) -> Any:
             try:
                 return technique(path, package)
             except ModuleNotFoundError:
-                item = path.split('.')[-1]
+                item = path.rsplit('.', maxsplit = 1)[-1]
                 module_name = path[:-len(item) - 1]
                 module = technique(module_name, package)
                 return getattr(module, item)
         raise ModuleNotFoundError(f'{path} could not be imported') from e
 
-def absolute_import(path: str, package: str) -> Any:
-    """[summary]
+def absolute_import(path: str, package: str) -> Any:  # noqa: ARG001
+    """Imports the item at `path`.
 
     Args:
-        path:
-        package:
+        path: import path of the item to import.
+        package: name of the package for relative imports. It is currently
+            unused when `path` is an absolute path.
 
     Returns:
-        Any: [description]
+        Any: imported item.
 
     """
     if path.startswith('.'):
@@ -243,6 +244,18 @@ class Importer:
     """ Public Methods """
 
     def load(self, name: str) -> Any:
+        """Returns the imported item stored under `name`.
+
+        Args:
+            name: key of the item in `importables`.
+
+        Raises:
+            KeyError: if `name` is not in `importables`.
+
+        Returns:
+            Any: imported item.
+
+        """
         if name not in self.importables:
             raise KeyError(f'{name} is not in importables')
         if not isinstance(self.importables[name], str):

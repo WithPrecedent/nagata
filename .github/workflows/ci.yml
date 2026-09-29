@@ -18,7 +18,7 @@ permissions:
 jobs:
 
   build_and_test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,20 +36,12 @@ jobs:
 
     - name: install uv
       uses: astral-sh/setup-uv@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: create uv environment
-      run: uv venv
 
     - name: install dependencies
-      run: uv pip install
-
-    - name: run pre-commit
-      run: uv run pre-commit run -a --show-diff-on-failure
+      run: uv sync --python ${{ matrix.python-version }} --group tests --group quality --all-extras
 
     - name: run tests
-      run: uv run -v pytest tests
+      run: uv run pytest tests
 
     - name: run ruff
       run: uv run ruff check
@@ -67,14 +59,11 @@ jobs:
     - name: install uv
       uses: astral-sh/setup-uv@v4
 
-    - name: create uv environment
-      run: uv venv
-
     - name: install dependencies
-      run: uv pip install
+      run: uv sync --group quality
 
     - name: run ruff
-      run: uv run ruff check --format=github .
+      run: uv run ruff check --output-format=github .
 
   document_and_deploy:
     runs-on: ubuntu-latest
@@ -89,11 +78,8 @@ jobs:
     - name: install uv
       uses: astral-sh/setup-uv@v4
 
-    - name: create uv environment
-      run: uv venv
-
     - name: install dependencies
-      run: uv pip install
+      run: uv sync --group dev --all-extras
 
     - name: build documentation with mkdocs
       run: uv run mkdocs build

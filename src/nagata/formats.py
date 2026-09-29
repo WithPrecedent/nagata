@@ -5,7 +5,7 @@ Contents:
         because the act of instancing causes them to be stored in
         'FileFramework.formats'.
 
-ToDo:
+To Do:
 
 
 """
@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-import sys
+import importlib
+import pickle
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from . import base
@@ -55,9 +56,7 @@ class FileFormatPickle(base.FileFormat):
             object: item loaded from 'path'.
 
         """
-        with open(path, **kwargs) as a_file:
-            if 'pickle' not in sys.modules:
-                import pickle
+        with open(path, 'rb', **kwargs) as a_file:
             return pickle.load(a_file)  # noqa: S301
 
     def save(
@@ -73,9 +72,7 @@ class FileFormatPickle(base.FileFormat):
             kwargs: additional keyword arguments.
 
         """
-        with open(path, 'w', **kwargs) as a_file:
-            if 'pickle' not in sys.modules:
-                import pickle
+        with open(path, 'wb', **kwargs) as a_file:
             pickle.dump(item, a_file)
         return
 
@@ -160,7 +157,10 @@ class FileFormatPandas(base.FileFormat, abc.ABC):
 
     """ Public Methods """
 
-    def load(self, path: pathlib.Path | str, **kwargs) -> object:
+    def load(
+        self,
+        path: pathlib.Path | str,
+        **kwargs: base.Kwargs) -> object:
         """Loads a file to a pandas dataframe.
 
         Args:
@@ -177,20 +177,20 @@ class FileFormatPandas(base.FileFormat, abc.ABC):
         if self.loader is None:
             raise NotImplementedError(
                 'pandas does not support loading for this data type')
-        if 'pd' not in sys.modules:
-            import pandas as pd
+        pd = importlib.import_module('pandas')
         return getattr(pd, self.loader)(path, **kwargs)
 
     def save(
         self,
         item: object,
         path: pathlib.Path | str,
-        **kwargs: base.GenericDict) -> None:
+        **kwargs: base.Kwargs) -> None:
         """Saves dataframe 'item' to a file at 'path'.
 
         Args:
             item (object): pandas dataframe.
             path (pathlib.Path | str): path to which 'item' should be saved.
+            kwargs: additional keyword arguments.
 
         Raises:
             NotImplementedError: if 'saver' is None.
@@ -478,11 +478,15 @@ class FileFormatSeaborn(base.FileFormat, abc.ABC):
 
     """ Public Methods """
 
-    def load(self, path: pathlib.Path | str, **kwargs) -> object:
+    def load(
+        self,
+        path: pathlib.Path | str,
+        **kwargs: base.Kwargs) -> object:
         """Loads a file to a pandas dataframe.
 
         Args:
             path (pathlib.Path | str): path to pandas dataframe.
+            kwargs: additional keyword arguments.
 
         Raises:
             NotImplementedError: if 'loader' is None.
@@ -494,16 +498,20 @@ class FileFormatSeaborn(base.FileFormat, abc.ABC):
         if self.loader is None:
             raise NotImplementedError(
                 'seaborn does not support loading for this data type')
-        if 'seaborn' not in sys.modules:
-            import seaborn
-        return getattr(seaborn, self.loader)(path, **kwargs)
+        sns = importlib.import_module('seaborn')
+        return getattr(sns, self.loader)(path, **kwargs)
 
-    def save(self, item: object, path: pathlib.Path | str, **kwargs) -> None:
+    def save(
+        self,
+        item: object,
+        path: pathlib.Path | str,
+        **kwargs: base.Kwargs) -> None:
         """Saves dataframe 'item' to a file at 'path'.
 
         Args:
             item (object): pandas dataframe.
             path (pathlib.Path | str): path to which 'item' should be saved.
+            kwargs: additional keyword arguments.
 
         Raises:
             NotImplementedError: if 'saver' is None.
