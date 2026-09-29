@@ -1,20 +1,4 @@
-"""
-lazy: lazy importing classes and functions
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+"""Lazy importing classes and functions.
 
 Contents:
     from_path:
@@ -25,57 +9,60 @@ Contents:
     relative_import:
     relative_subpackage_import:
     from_importables:
-    Importer (object):
-    Delayed (object):
-    
-ToDo:
+    Importer:
+    Delayed:
+
+To Do:
 
 
 """
 from __future__ import annotations
-from collections.abc import MutableMapping
+
 import dataclasses
 import importlib
 import importlib.util
 import pathlib
 import sys
-import types
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import MutableMapping
 
 
 """ Importing Tools """
 
 def from_path(
-    path: pathlib.Path | str, 
-    name: Optional[str] = None) -> Any:
-    """Imports and returns module from import or file path at 'name'.
+    path: pathlib.Path | str,
+    name: str | None = None) -> types.ModuleType:
+    """Imports and returns module from import or file path at `name`.
 
     Args:
-        path (pathlib.Path | str): import or file path of module to load.
-        name (Optional[str]): name to store module at in 'sys.modules'. If it
-            is None, the stem of 'path' is used. Defaults to None.
-            
+        path: import or file path of module to load.
+        name: name to store module at in `sys.modules`. If it is None, the stem
+            of `path` is used. Defaults to None.
+
     Returns:
-        Any:
-        
+        Imported module.
+
     """
-    if isinstance(path, pathlib.Path) or '\\' in path or '\/' in path:
+    if isinstance(path, pathlib.Path) or '\\' in path or r'/' in path:
         return from_file_path(path = path, name = name)
-    else:
-        return from_import_path(path = path)
+    return from_import_path(path = path)
 
 def from_file_path(
-    path: pathlib.Path | str, 
-    name: Optional[str] = None) -> types.ModuleType:
-    """Imports and returns module from file path at 'name'.
+    path: pathlib.Path | str,
+    name: str | None = None) -> types.ModuleType:
+    """Imports and returns module from file path at `name`.
 
     Args:
-        path (pathlib.Path | str): file path of module to load.
-        name (Optional[str]): name to store module at in 'sys.modules'. If it
-            is None, the stem of 'path' is used. Defaults to None.
+        path: import or file path of module to load.
+        name: name to store module at in `sys.modules`. If it is None, the stem
+            of `path` is used. Defaults to None.
+
     Returns:
-        types.ModuleType: imported module.
-        
+        Imported module.
+
     """
     if isinstance(path, str):
         path = pathlib.Path(path)
@@ -84,30 +71,26 @@ def from_file_path(
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None:
         raise ImportError(f'Failed to create spec from {path}')
-    else:
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-    
-def from_import_path(path: str, package: Optional[str] = None) -> Any:
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+def from_import_path(path: str, package: str | None = None) -> Any:
     """[summary]
 
     Args:
-        path (str): [description]
-        package (Optional[str], optional): [description]. Defaults to None.
+        path: [description]
+        package: [description]. Defaults to None.
 
     Returns:
         Any: [description]
-        
+
     """
     # if package and isinstance(path, str):
     #     path = '.'.join([path, package])
-    print('test sys modules', 'pandas' in sys.modules)
-    print('test path package', path, package)
     try:
         return sys.modules[path]
-    
-    except KeyError:
+    except KeyError as e:
         techniques = [
             absolute_import,
             absolute_subpackage_import,
@@ -120,34 +103,35 @@ def from_import_path(path: str, package: Optional[str] = None) -> Any:
                 item = path.split('.')[-1]
                 module_name = path[:-len(item) - 1]
                 module = technique(module_name, package)
-                return getattr(module, item)  
-        raise ModuleNotFoundError(f'{path} could not be imported') 
-             
+                return getattr(module, item)
+        raise ModuleNotFoundError(f'{path} could not be imported') from e
+
 def absolute_import(path: str, package: str) -> Any:
     """[summary]
 
     Args:
-        path (str): [description]
+        path:
+        package:
 
     Returns:
         Any: [description]
-        
+
     """
     if path.startswith('.'):
         path = path[1:]
         return relative_subpackage_import(path = path)
     return importlib.import_module(path)
- 
+
 def absolute_subpackage_import(path: str, package: str) -> Any:
     """[summary]
 
     Args:
-        path (str): [description]
-        package (str): [description]. 
+        path: [description]
+        package: [description].
 
     Returns:
         Any: [description]
-        
+
     """
     if path.startswith('.'):
         path = path[1:]
@@ -158,140 +142,137 @@ def relative_import(path: str) -> Any:
     """[summary]
 
     Args:
-        path (str): [description]
+        path: [description]
 
     Returns:
         Any: [description]
-        
+
     """
     if not path.startswith('.'):
-        path = '.' + path
+        path = f'.{path}'
     return importlib.import_module(sys.path_importer_cache)
 
 def relative_subpackage_import(path: str, package: str) -> Any:
     """[summary]
 
     Args:
-        path (str): [description]
-        package (str): [description]. 
+        path: [description]
+        package: [description].
 
     Returns:
         Any: [description]
-        
+
     """
     if not path.startswith('.'):
-        path = '.' + path
+        path = f'.{path}'
     return importlib.import_module(path, package = package)
 
 def from_importables(
-    name: str, 
+    name: str,
     importables: MutableMapping[str, str],
-    package: Optional[str] = None) -> Any:
+    package: str | None = None) -> Any:
     """Lazily imports modules and items within them.
-    
+
     Lazy importing means that modules are only imported when they are first
     accessed. This can save memory and keep namespaces decluttered.
-    
+
     This code is adapted from PEP 562: https://www.python.org/dev/peps/pep-0562/
-    which outlines how the decision to incorporate '__getattr__' functions to 
+    which outlines how the decision to incorporate `__getattr__` functions to
     modules allows lazy loading. Rather than place this function solely within
-    '__getattr__', it is included here seprately so that it can easily be called 
-    by '__init__.py' files throughout nagata and by users (as 
-    'nagata.load.from_dict').
-    
-    To effectively use 'from_dict' in an '__init__.py' file, the user needs to 
-    pass a 'importables' dict which indicates how users should accesss imported 
-    modules and included items. This modules includes an example 'importables' 
-    dict and how to easily add this function to a '__getattr__' function.
-    
-    Instead of limiting its lazy imports to full import paths as the example in 
+    `__getattr__`, it is included here seprately so that it can easily be called
+    by `__init__.py` files throughout nagata and by users (as
+    `nagata.load.from_dict`).
+
+    To effectively use `from_dict` in an `__init__.py` file, the user needs to
+    pass a `importables` dict which indicates how users should accesss imported
+    modules and included items. This modules includes an example `importables`
+    dict and how to easily add this function to a `__getattr__` function.
+
+    Instead of limiting its lazy imports to full import paths as the example in
     PEP 562, this function has 2 major advantages:
         1) It allows importing items within modules and not just modules. The
-            function first tries to import 'name' assuming it is a module. But 
-            if that fails, it parses the last portion of 'name' and attempts to 
+            function first tries to import `name` assuming it is a module. But
+            if that fails, it parses the last portion of `name` and attempts to
             import the preceding module and then returns the item within it.
         2) It allows import paths that are less than the full import path by
-            using the 'importables' dict. 'importables' has keys which are the 
-            name of the attribute being sought and values which are the full 
-            import path (dropping the leading '.'). 'importables' thus acts as 
-            the normal import block in an __init__.py file but insures that all 
+            using the `importables` dict. `importables` has keys which are the
+            name of the attribute being sought and values which are the full
+            import path (dropping the leading `.`). `importables` thus acts as
+            the normal import block in an __init__.py file but insures that all
             importing is done lazily.
-            
+
     Args:
-        name (str): name of module or item within a module.
-        package (str): name of package from which the module is sought.
-        importables (MutableMapping[str, str]): keys are the access names for 
-            items sought and values are the import path where the item is 
+        name: name of module or item within a module.
+        package: name of package from which the module is sought.
+        importables (MutableMapping[str, str]): keys are the access names for
+            items sought and values are the import path where the item is
             actually located.
-        
+
     Raises:
-        AttributeError: if there is no module or item matching 'name' im 
-            'importables'.
-        
+        AttributeError: if there is no module or item matching `name` im
+            `importables`.
+
     Returns:
         Any: a module or item stored within a module.
-        
+
     """
     try:
         return from_import_path(path = importables[name], package = package)
-    except KeyError:
-        raise KeyError(f'{name} is not in importables') 
+    except KeyError as e:
+        raise KeyError(f'{name} is not in importables') from e
 
 
 """ Class Implementations """
 
 @dataclasses.dataclass
-class Importer(object):
+class Importer:
     """Lazy importer that uses a dict to lazily import items.
-    
+
     Args:
-        package (str): name of package to which the 'importables' are linked.
-        importables (Optional[MutableMapping[str, str]]): dict keys are names
+        package: name of package to which the `importables` are linked.
+        importables: dict keys are names
             used to refer to importable item and values are the import paths of
             the importable items. Defaults to an empty dict.
-    
+
     """
+
     package: str
-    importables: Optional[MutableMapping[str, str]] = dataclasses.field(
+    importables: MutableMapping[str, str] | None = dataclasses.field(
         default_factory = dict)
-        
+
     """ Public Methods """
-    
+
     def load(self, name: str) -> Any:
-        if name in self.importables:
-            if not isinstance(self.importables[name], str):
-                return self.importables[name]
-            else:
-                imported = from_importables(
-                    name = name, 
-                    importables = self.importables,
-                    package = self.package)
-                self.importables[name] = imported
-                return imported
-        else:
+        if name not in self.importables:
             raise KeyError(f'{name} is not in importables')
-           
+        if not isinstance(self.importables[name], str):
+            return self.importables[name]
+        imported = from_importables(
+            name = name,
+            importables = self.importables,
+            package = self.package)
+        self.importables[name] = imported
+        return imported
+
 
 @dataclasses.dataclass
-class Delayed(object):
+class Delayed:
     """Mixin that converts str attributes to imported items when accessed.
-    
-    # Only str values of attributes with a '.' in them are assumed to be import
+
+    # Only str values of attributes with a `.` in them are assumed to be import
     # paths.
-    
+
     After an item is imported, it is assigned to the attribute which previously
     held the str import path so that it does not need to be reloaded.
-    
+
     """
- 
+
     """ Dunder Methods """
-    
+
     def __getattribute__(self, name: str) -> Any:
         item = super().__getattribute__(name)
-        if isinstance(item, str):
-            imported = from_import_path(item = name)
-            super().__setattr__(name, imported)
-            return imported
-        else:
+        if not isinstance(item, str):
             return item
-                
+        imported = from_import_path(item = name)
+        super().__setattr__(name, imported)
+        return imported

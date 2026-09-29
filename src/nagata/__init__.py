@@ -9,6 +9,7 @@ __author__: str = 'Corey Rayburn Yung'
 __all__: list[str] = []
 
 
-from .core import *
+from .base import *
+from .descriptors import *
 from .formats import *
 from .lazy import *
