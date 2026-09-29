@@ -35,7 +35,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: install dependencies
       run: uv sync --python ${{ matrix.python-version }} --group tests --group quality --all-extras
@@ -57,7 +57,7 @@ jobs:
       uses: actions/setup-python@v5
 
     - name: install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: install dependencies
       run: uv sync --group quality
@@ -76,7 +76,7 @@ jobs:
       uses: actions/setup-python@v5
 
     - name: install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: install dependencies
       run: uv sync --group dev --all-extras
