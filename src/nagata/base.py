@@ -165,6 +165,7 @@ class FileFramework:
     settings: ClassVar[dict[Hashable, Any]] = {
         'file_encoding': 'windows-1252',
         'index_column': False,
+        'included_columns': None,
         'header': 'infer',
         'conserve_memory': False,
         'test_size': 1000,

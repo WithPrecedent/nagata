@@ -37,6 +37,33 @@ dependencies = [
 [project.optional-dependencies]
 pandas = ["pandas"]
 seaborn = ["seaborn"]
+excel = ["pandas", "openpyxl"]
+hdf = ["pandas", "tables"]
+html = ["pandas", "lxml"]
+joblib = ["joblib"]
+latex = ["pandas", "jinja2"]
+markdown = ["pandas", "tabulate"]
+numpy = ["numpy"]
+orc = ["pandas", "pyarrow"]
+parquet = ["pandas", "pyarrow"]
+spss = ["pandas", "pyreadstat"]
+toml = ["tomli-w"]
+xml = ["pandas", "lxml"]
+yaml = ["pyyaml"]
+all = [
+    "jinja2",
+    "joblib",
+    "lxml",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "pyarrow",
+    "pyreadstat",
+    "pyyaml",
+    "seaborn",
+    "tables",
+    "tabulate",
+    "tomli-w"]
 
 [project.urls]
 Documentation = "https://WithPrecedent.github.io/nagata"
