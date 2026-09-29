@@ -30,11 +30,6 @@ or writer from the file extension and resolves folders for you.
 
 ## Why use nagata?
 
-<p align="center">
-<img src="https://media.giphy.com/media/xUPGcgS0aDsgtScP7y/giphy.gif
-" alt="Every shitty thing we do makes the next one that much easier, doesn't it?" style="width:350px;"/>
-</p>
-
 * **One syntax for many formats:** `load` and `save` work the same way for
   tabular data, arrays, configuration files, figures, and pickled objects.
 * **Format detection:** the file extension selects the format. You can also
