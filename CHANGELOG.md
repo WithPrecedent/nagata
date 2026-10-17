@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 <!-- insertion marker -->
 
+## 0.2.1 (2026-10-17)
+
+### Changed
+- Updated to the `snickerdoodle` 0.4.0 template.
+- Removed `ruff format` from the `pre-commit` hooks because it removes the spaces around "=" in keyword arguments.
+- Made `ruff` prefer single quotes.
+- Made `ruff` ignore boolean default positional arguments (`FBT002`).
+- Relaxed `pydoclint` checks of type hints, class attributes, and raised exceptions.
+- Fixed typos in the contributing guide and noted that the project does not use a code formatter.
+- Fixed the LICENSE link in the README.
+
 ## 0.2.0 (2026-09-29)
 
 ### Added
