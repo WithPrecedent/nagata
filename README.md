@@ -274,4 +274,4 @@ README is from James S. A. Corey's *The Expanse* series.
 
 ## License
 
-Use of this repository is authorized under the [Apache Software License 2.0](https://www.github.com/WithPrecedent/nagata/blog/main/LICENSE).
+Use of this repository is authorized under the [Apache Software License 2.0](https://www.github.com/WithPrecedent/nagata/blob/main/LICENSE).
