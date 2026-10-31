@@ -14,8 +14,6 @@
 
 ## What is nagata?
 
-*This package is under heavy construction. Use at your own risk*
-
 `nagata` is a small Python package for loading and saving files with one
 common, intuitive syntax. Instead of remembering `pandas.read_parquet`,
 `yaml.safe_load`, `numpy.load`, `pickle.load`, and so on, you create a
@@ -264,13 +262,6 @@ wraps. If it is not quite what you need, these projects solve related problems:
   for larger data pipelines.
 * [joblib](https://joblib.readthedocs.io/): efficient persistence for Python
   objects, including large NumPy arrays and fitted models.
-
-## Acknowledgments
-
-Thanks to the maintainers and contributors of pandas, NumPy, seaborn and
-matplotlib, PyYAML, joblib, and the other open-source libraries that do the
-heavy lifting behind `nagata`'s formats. The quotation at the top of this
-README is from James S. A. Corey's *The Expanse* series.
 
 ## License
 

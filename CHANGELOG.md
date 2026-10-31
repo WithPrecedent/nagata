@@ -4,14 +4,13 @@ All notable changes to this project will be documented in this file.
 
 <!-- insertion marker -->
 
-## Unreleased
+## 0.2.1 (2026-10-31)
 
-* Added the `py.typed` marker so that type checkers use the type hints in
-  `nagata`.
-
-## 0.2.1 (2026-10-17)
+### Added
+- Added the `py.typed` marker so that type checkers use the type hints in `nagata`.
 
 ### Changed
+- Removed the "under heavy construction" notice and the acknowledgments from the README.
 - Updated to the `snickerdoodle` 0.4.0 template.
 - Removed `ruff format` from the `pre-commit` hooks because it removes the spaces around "=" in keyword arguments.
 - Made `ruff` prefer single quotes.
